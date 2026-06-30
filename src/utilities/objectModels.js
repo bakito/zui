@@ -17,7 +17,8 @@ const mapToRepo = (responseRepo) => {
     downloads: responseRepo.DownloadCount,
     stars: responseRepo.StarCount,
     vulnerabiltySeverity: responseRepo.NewestImage?.Vulnerabilities?.MaxSeverity,
-    vulnerabilityCount: responseRepo.NewestImage?.Vulnerabilities?.Count
+    vulnerabilityCount: responseRepo.NewestImage?.Vulnerabilities?.Count,
+    digest: responseRepo.NewestImage?.Digest || responseRepo.Digest
   };
 };
 
@@ -43,7 +44,8 @@ const mapToRepoFromRepoInfo = (responseRepoInfo) => {
     signatureInfo: responseRepoInfo.Summary?.NewestImage?.SignatureInfo?.map((sigInfo) => mapSignatureInfo(sigInfo)),
     isBookmarked: responseRepoInfo.Summary?.IsBookmarked,
     isStarred: responseRepoInfo.Summary?.IsStarred,
-    logo: responseRepoInfo.Summary?.NewestImage?.Logo
+    logo: responseRepoInfo.Summary?.NewestImage?.Logo,
+    digest: responseRepoInfo.Summary?.Digest || responseRepoInfo.Summary?.NewestImage?.Digest
   };
 };
 

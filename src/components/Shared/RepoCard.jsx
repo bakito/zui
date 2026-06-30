@@ -36,21 +36,9 @@ import { VulnerabilityIconCheck, SignatureIconCheck } from 'utilities/vulnerabil
 import { Markdown } from 'utilities/MarkdowntojsxWrapper';
 import filterConstants from 'utilities/filterConstants';
 
-// placeholder images
-import repocube1 from '../../assets/repocube-1.png';
-import repocube2 from '../../assets/repocube-2.png';
-import repocube3 from '../../assets/repocube-3.png';
-import repocube4 from '../../assets/repocube-4.png';
+import OciImage from './OciImage';
 
-// temporary utility to get image
-const randomIntFromInterval = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-};
 
-const randomImage = () => {
-  const imageArray = [repocube1, repocube2, repocube3, repocube4];
-  return imageArray[randomIntFromInterval(0, 3)];
-};
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -172,7 +160,7 @@ const useStyles = makeStyles((theme) => ({
 function RepoCard(props) {
   const classes = useStyles();
   const navigate = useNavigate();
-  const placeholderImage = useRef(randomImage());
+
   // dynamically check device size with mui media query hook
   const theme = useTheme();
   const isXsSize = useMediaQuery(theme.breakpoints.down('md'));
@@ -192,7 +180,9 @@ function RepoCard(props) {
     version,
     vulnerabilityData,
     isBookmarked,
-    isStarred
+    isStarred,
+    logo,
+    digest
   } = props;
 
   // keep a local bookmark state to display in the ui dynamically on updates
@@ -327,14 +317,14 @@ function RepoCard(props) {
           <Grid container>
             <Grid item xs={12} md={10}>
               <Stack alignItems="center" direction="row" spacing={2}>
-                <CardMedia
+                <OciImage
                   classes={{
                     root: classes.media,
                     img: classes.avatar
                   }}
-                  component="img"
-                  image={placeholderImage.current}
-                  alt="icon"
+                  digest={digest}
+                  name={name}
+                  logo={logo}
                 />
                 <Tooltip title={name} placement="top">
                   <Typography variant="h5" component="div" noWrap className={classes.cardTitle}>
