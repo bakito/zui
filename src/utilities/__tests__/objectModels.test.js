@@ -1,4 +1,4 @@
-import { mapToImage, mapToManifest } from '../objectModels';
+import { mapToImage, mapToManifest, mapToRepo, mapToRepoFromRepoInfo } from '../objectModels';
 
 describe('objectModels', () => {
   describe('mapToImage', () => {
@@ -8,6 +8,7 @@ describe('objectModels', () => {
         Tag: 'latest',
         TaggedTimestamp: '2020-12-10T00:22:52.526672082Z',
         LastUpdated: '2020-12-08T00:22:52.526672082Z',
+        Digest: 'sha256:123',
         Manifests: [],
         Referrers: [],
         Size: '1000',
@@ -35,6 +36,7 @@ describe('objectModels', () => {
       expect(result.tag).toBe('latest');
       expect(result.artifactType).toBe('application/vnd.acme.rocket.config');
       expect(result.lastUpdated).toBe('2020-12-08T00:22:52.526672082Z');
+      expect(result.digest).toBe('sha256:123');
     });
 
     it('should handle missing TaggedTimestamp', () => {
@@ -65,6 +67,58 @@ describe('objectModels', () => {
 
       expect(result.lastTagged).toBeUndefined();
       expect(result.repoName).toBe('test-repo');
+    });
+  });
+
+  describe('mapToRepo', () => {
+    it('should prefer NewestImage.Digest over Repo.Digest', () => {
+      const repo = {
+        Digest: 'repo-digest',
+        NewestImage: {
+          Digest: 'newest-digest'
+        }
+      };
+      const result = mapToRepo(repo);
+      expect(result.digest).toBe('newest-digest');
+    });
+
+    it('should fallback to Repo.Digest if NewestImage.Digest is missing', () => {
+      const repo = {
+        Digest: 'repo-digest',
+        NewestImage: {
+          Tag: 'latest'
+        }
+      };
+      const result = mapToRepo(repo);
+      expect(result.digest).toBe('repo-digest');
+    });
+  });
+
+  describe('mapToRepoFromRepoInfo', () => {
+    it('should prefer NewestImage.Digest over Summary.Digest', () => {
+      const repoInfo = {
+        Summary: {
+          Digest: 'summary-digest',
+          NewestImage: {
+            Digest: 'newest-digest'
+          }
+        }
+      };
+      const result = mapToRepoFromRepoInfo(repoInfo);
+      expect(result.digest).toBe('newest-digest');
+    });
+
+    it('should fallback to Summary.Digest if NewestImage.Digest is missing', () => {
+      const repoInfo = {
+        Summary: {
+          Digest: 'summary-digest',
+          NewestImage: {
+            Tag: 'latest'
+          }
+        }
+      };
+      const result = mapToRepoFromRepoInfo(repoInfo);
+      expect(result.digest).toBe('summary-digest');
     });
   });
 
