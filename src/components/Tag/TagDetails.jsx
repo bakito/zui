@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { api, endpoints } from '../../api';
 import { host } from '../../host';
 import { mapToImage } from '../../utilities/objectModels';
+import { decodeRouteParam } from '../../utilities/urlUtilities';
 import filterConstants from 'utilities/filterConstants';
 import { isEmpty, head, uniqBy } from 'lodash';
 
@@ -135,6 +136,11 @@ const randomImage = () => {
   return imageArray[randomIntFromInterval(0, 3)];
 };
 
+const NON_ARTIFACT_CONFIG_MEDIA_TYPES = new Set([
+  'application/vnd.oci.image.config.v1+json',
+  'application/vnd.docker.container.image.v1+json'
+]);
+
 function TagDetails() {
   const [imageDetailData, setImageDetailData] = useState({});
   const [selectedManifest, setSelectedManifest] = useState({});
@@ -149,7 +155,9 @@ function TagDetails() {
   const { digest } = state || '';
 
   // get url param from <Route here (i.e. image name)
-  const { reponame, tag } = useParams();
+  const { reponame: rawReponame, tag: rawTag } = useParams();
+  const reponame = decodeRouteParam(rawReponame);
+  const tag = decodeRouteParam(rawTag);
 
   const classes = useStyles();
 
@@ -203,6 +211,9 @@ function TagDetails() {
     setSelectedManifest(value);
   };
 
+  const artifactType = selectedManifest?.artifactType || imageDetailData?.artifactType;
+  const isArtifact = Boolean(artifactType && !NON_ARTIFACT_CONFIG_MEDIA_TYPES.has(artifactType));
+
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'DependsOn':
@@ -218,15 +229,23 @@ function TagDetails() {
             platform={selectedManifest?.platform}
           />
         );
-      case 'ReferredBy':
+      case 'ReferredBy': {
         const allReferrers = uniqBy(
           [...(selectedManifest?.referrers || []), ...(imageDetailData?.referrers || [])],
           'digest'
         );
 
         return <ReferredBy referrers={allReferrers} />;
+      }
       default:
-        return <HistoryLayers name={imageDetailData?.name} history={selectedManifest?.history || []} />;
+        return (
+          <HistoryLayers
+            name={imageDetailData?.name}
+            history={selectedManifest?.history || []}
+            isArtifact={isArtifact}
+            layers={selectedManifest?.layers || []}
+          />
+        );
     }
   };
 
@@ -314,6 +333,11 @@ function TagDetails() {
                         <Typography gutterBottom className={classes.digest}>
                           Digest: {selectedManifest?.digest}
                         </Typography>
+                        {isArtifact && (
+                          <Typography gutterBottom className={classes.digest} data-testid="artifact-type-inline">
+                            Artifact Type: {artifactType}
+                          </Typography>
+                        )}
                       </Stack>
                     )}
                   </Grid>
@@ -369,6 +393,7 @@ function TagDetails() {
               lastTagged={imageDetailData?.lastTagged}
               license={imageDetailData?.license}
               imageName={imageDetailData?.name}
+              isArtifact={isArtifact}
             />
           </Grid>
         </Grid>
